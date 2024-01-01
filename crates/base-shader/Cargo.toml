@@ -2,7 +2,13 @@
 name = "base-shader"
 version = "0.1.0"
 edition = "2021"
+publish = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["lib", "dylib"]
+
 
 [dependencies]
+shared = {path = "../shared"}
+marpii-rmg-shared = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false}
+marpii-rmg-task-shared = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false}

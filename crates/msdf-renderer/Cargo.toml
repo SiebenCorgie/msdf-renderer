@@ -6,3 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+marpii = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false, features = ["default_allocator", "logging"]}
+marpii-rmg = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false}
+marpii-rmg-shared = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false}
+marpii-rmg-tasks = {git = "https://gitlab.com/tendsinmende/marpii.git"}
+ahash.workspace = true
+winit.workspace = true
+shared = {path = "../shared"}
+shader_builder = {path = "../shader_builder"}
+hotwatch = "0.5.0"
+log.workspace = true

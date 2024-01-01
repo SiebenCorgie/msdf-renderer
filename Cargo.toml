@@ -1,7 +1,9 @@
 [workspace]
 members = [
-"crates/msdf-renderer",
 "crates/base-shader",
+"crates/shared",
+"crates/shader_builder",
+"crates/msdf-renderer",
 ]
 
 
@@ -10,7 +12,7 @@ spirv-std = { git = "https://github.com/LykenSol/rust-gpu", rev = "d78df7e40f860
 spirv-builder = { git = "https://github.com/LykenSol/rust-gpu", rev = "d78df7e40f860efe85ef369fed10da2f2940bb70" }
 bytemuck = "1"
 log = "0.4.15"
-ahash = "0.8.2"
 thiserror = "1.0"
 simple_logger = "4"
-winit = "0.28.2"
+winit = "0.28"
+ahash = "=0.8.4"
