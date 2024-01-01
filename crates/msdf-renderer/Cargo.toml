@@ -16,3 +16,8 @@ shared = {path = "../shared"}
 shader_builder = {path = "../shader_builder"}
 hotwatch = "0.5.0"
 log.workspace = true
+
+
+msdfc = {git = "https://gitlab.com/tendsinmende/minisdf.git", branch = "main"}
+spv-patcher = {git = "https://gitlab.com/tendsinmende/spv-patcher.git", branch = "main"}
+simple_logger.workspace = true

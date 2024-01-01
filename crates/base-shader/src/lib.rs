@@ -21,8 +21,8 @@ fn reinhard_inverse(ldr: Vec4) -> Vec4 {
 
 //The Sdf function we are patching
 #[inline(never)]
-pub fn sdf(pos: Vec3, offset: Vec3) -> f32 {
-    pos.length() - offset.x
+pub fn eval_sdf(pos: Vec3, offset: Vec3) -> f32 {
+    pos.length() - 1.0
 }
 
 #[spirv(compute(threads(8, 8, 1)))]
@@ -40,11 +40,34 @@ pub fn renderer(
     let coordf32 = coord.as_vec2();
     let coord_uv = coordf32 / UVec2::new(push.resolution[0], push.resolution[1]).as_vec2();
 
+    let ndc = coord_uv * 2.0 - 1.0;
+    let ray = push.ray_from_ndc(ndc);
+
+    let mut t = 0.1f32;
+    let mut i = 0;
+    const EPS: f32 = 0.01;
+    const MAX_I: usize = 128;
+
+    while t < ray.max_t && i < MAX_I {
+        let res = eval_sdf(ray.at(t), Vec3::ZERO);
+        if res <= EPS {
+            break;
+        } else {
+            t += res;
+        }
+        i += 1;
+    }
+
+    let mut color = Vec3::ONE;
+    if t < (ray.max_t - 0.1) {
+        color = Vec3::ZERO;
+    }
+
     if push.target_image.is_valid() {
         unsafe {
             rgbaf32_images
                 .index(push.target_image.index() as usize)
-                .write(coord, Vec4::ONE);
+                .write(coord, color.extend(1.0));
         }
     }
 }

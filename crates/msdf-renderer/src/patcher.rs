@@ -1,8 +1,11 @@
 use hotwatch::{notify::Event, Hotwatch};
 use marpii::{resources::ShaderModule, OoS};
-use std::sync::{
-    mpsc::{Receiver, TryRecvError},
-    Arc,
+use std::{
+    path::Path,
+    sync::{
+        mpsc::{Receiver, TryRecvError},
+        Arc,
+    },
 };
 
 static BASE_SHADER: &'static [u8] = include_bytes!("../../resources/base-shader.spv");
@@ -31,14 +34,33 @@ impl Patcher {
 
         let mut watcher = Hotwatch::new().expect("Could not create file watcher!");
 
-        watcher.watch("sdf.minisdf", move |ev: Event| {
-            if !ev.kind.is_modify() {
-                return;
-            }
+        if !Path::new("sdf.minisdf").exists() {
+            panic!("File sdf.minisdf does not exist!");
+        }
 
-            //TODO build new module
-        });
+        let mut patcher =
+            spv_patcher::Module::new(BASE_SHADER.to_vec()).expect("Could not load basecode");
 
+        watcher
+            .watch("sdf.minisdf", move |ev: Event| {
+                if !ev.kind.is_modify() {
+                    return;
+                }
+
+                //First of all, try to run the compiler
+                let modules = match msdfc::compile_file("sdf.minisdf") {
+                    Ok(m) => m,
+                    Err(e) => {
+                        println!("Failed to compile sdf.minisdf: {e}");
+                        return;
+                    }
+                };
+
+                //now, try to inject all fields, based on the name using the patcher for our base module
+                let patch = patcher.patch();
+                for (name, module) in modules {}
+            })
+            .expect("Could not schedule sdf-file watcher!");
         Self {
             recv,
             hotwatch: watcher,

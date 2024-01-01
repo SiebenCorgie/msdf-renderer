@@ -1,0 +1,122 @@
+use std::time::Instant;
+
+use shared::glam::{EulerRot, Quat, Vec3};
+use winit::event::{DeviceEvent, ElementState, Event, VirtualKeyCode, WindowEvent};
+
+#[derive(Clone, Copy)]
+struct MoveState {
+    neg: bool,
+    pos: bool,
+}
+
+impl Default for MoveState {
+    fn default() -> Self {
+        MoveState {
+            neg: false,
+            pos: false,
+        }
+    }
+}
+
+impl MoveState {
+    fn into_velocity(&self) -> f32 {
+        match (self.neg, self.pos) {
+            (true, true) => 0.0,
+            (false, true) => 1.0,
+            (true, false) => -1.0,
+            (false, false) => 0.0,
+        }
+    }
+}
+
+pub struct Camera {
+    location: Vec3,
+    rotation: Quat,
+    last_update: Instant,
+    move_states: [MoveState; 3],
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        Camera {
+            location: Vec3::new(0.0, 0.0, -3.0),
+            rotation: Quat::IDENTITY,
+            last_update: Instant::now(),
+            move_states: [MoveState::default(); 3],
+        }
+    }
+}
+
+impl Camera {
+    const CAM_SPEEDUP: f32 = 0.001;
+    pub fn on_event(&mut self, event: &winit::event::Event<()>) {
+        match event {
+            Event::WindowEvent {
+                event: WindowEvent::KeyboardInput { input, .. },
+                ..
+            } => match (input.virtual_keycode, input.state) {
+                (Some(VirtualKeyCode::A), ElementState::Pressed) => self.move_states[0].neg = true,
+                (Some(VirtualKeyCode::A), ElementState::Released) => {
+                    self.move_states[0].neg = false
+                }
+                (Some(VirtualKeyCode::D), ElementState::Pressed) => self.move_states[0].pos = true,
+                (Some(VirtualKeyCode::D), ElementState::Released) => {
+                    self.move_states[0].pos = false
+                }
+
+                (Some(VirtualKeyCode::S), ElementState::Pressed) => self.move_states[2].neg = true,
+                (Some(VirtualKeyCode::S), ElementState::Released) => {
+                    self.move_states[2].neg = false
+                }
+                (Some(VirtualKeyCode::W), ElementState::Pressed) => self.move_states[2].pos = true,
+                (Some(VirtualKeyCode::W), ElementState::Released) => {
+                    self.move_states[2].pos = false
+                }
+
+                (Some(VirtualKeyCode::E), ElementState::Pressed) => self.move_states[1].neg = true,
+                (Some(VirtualKeyCode::E), ElementState::Released) => {
+                    self.move_states[1].neg = false
+                }
+                (Some(VirtualKeyCode::Q), ElementState::Pressed) => self.move_states[1].pos = true,
+                (Some(VirtualKeyCode::Q), ElementState::Released) => {
+                    self.move_states[1].pos = false
+                }
+
+                _ => {}
+            },
+            Event::DeviceEvent {
+                event: DeviceEvent::MouseMotion { delta },
+                ..
+            } => {
+                self.rotation = self.rotation
+                    * Quat::from_euler(
+                        EulerRot::XYZ,
+                        delta.1 as f32 * Self::CAM_SPEEDUP,
+                        -delta.0 as f32 * Self::CAM_SPEEDUP,
+                        0.0,
+                    );
+            }
+            _ => {}
+        }
+    }
+
+    pub fn update(&mut self) {
+        let delta = self.last_update.elapsed().as_secs_f32();
+        self.last_update = Instant::now();
+
+        let velocity = Vec3::new(
+            self.move_states[0].into_velocity(),
+            self.move_states[1].into_velocity(),
+            self.move_states[2].into_velocity(),
+        );
+
+        let velo_div = self.rotation.mul_vec3(velocity);
+
+        self.location += velo_div * delta;
+    }
+
+    pub fn get_gpu_dta(&self) -> ([f32; 3], [f32; 4]) {
+        //println!("{} @ {}", self.location, self.rotation.mul_vec3(Vec3::Z));
+        (self.location.into(), self.rotation.to_array())
+    }
+}

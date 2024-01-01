@@ -5,7 +5,7 @@ use marpii::{
 };
 use marpii_rmg::{ImageHandle, Rmg, Task};
 
-use crate::patcher::Patcher;
+use crate::{patcher::Patcher, Camera};
 use shared::RenderUniform;
 use std::sync::Arc;
 
@@ -80,6 +80,12 @@ impl SphereTracing {
             (self.target_image.extent_2d().height / 8) + 1,
             1,
         ]
+    }
+
+    pub fn update_camera(&mut self, cam: &Camera) {
+        let (origin, rotation) = cam.get_gpu_dta();
+        self.pc.get_content_mut().camera_rotation = rotation;
+        self.pc.get_content_mut().camera_pos = origin.into();
     }
 }
 
