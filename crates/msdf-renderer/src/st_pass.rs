@@ -1,16 +1,17 @@
 use marpii::{
     ash::vk::{self, Extent2D},
-    resources::{ComputePipeline, ImgDesc, PushConstant, ShaderStage},
+    resources::{ComputePipeline, ImgDesc, PipelineLayout, PushConstant, ShaderStage},
     OoS,
 };
-use marpii_rmg::{ImageHandle, Rmg, Task};
+use marpii_rmg::{CtxRmg, ImageHandle, Rmg, Task};
 
 use crate::{patcher::Patcher, Camera};
-use shared::RenderUniform;
+use shared::{glam::Vec3, RenderUniform};
 use std::sync::Arc;
 
 pub struct SphereTracing {
     patcher: Patcher,
+    pipeline_layout: Arc<PipelineLayout>,
     pipeline: Arc<ComputePipeline>,
     pub target_image: ImageHandle,
     pc: PushConstant<shared::RenderUniform>,
@@ -55,8 +56,34 @@ impl SphereTracing {
             target_image,
             patcher,
             pc,
+            pipeline_layout: rmg.resources.bindless_layout(),
             pipeline,
         }
+    }
+
+    pub fn try_new_pipeline(&mut self, ctx: &CtxRmg) {
+        let nm = if let Some(new_module) = self.patcher.fetch_new_module() {
+            log::info!("New Shader module!");
+            new_module
+        } else {
+            return;
+        };
+
+        let ss = ShaderStage::from_module(nm, vk::ShaderStageFlags::COMPUTE, "renderer".to_owned());
+
+        match ComputePipeline::new(&ctx.device, &ss, None, self.pipeline_layout.clone()) {
+            Ok(np) => {
+                self.pipeline = Arc::new(np);
+            }
+            Err(e) => {
+                log::error!("Failed to build new pipeline: {e}");
+                return;
+            }
+        }
+    }
+
+    pub fn offset_parameter(&mut self, new: Vec3) {
+        self.pc.get_content_mut().offset = new.into();
     }
 
     pub fn notify_resolution(&mut self, rmg: &mut Rmg, resolution: Extent2D) {
@@ -112,8 +139,10 @@ impl Task for SphereTracing {
     fn pre_record(
         &mut self,
         resources: &mut marpii_rmg::Resources,
-        _ctx: &marpii_rmg::CtxRmg,
+        ctx: &marpii_rmg::CtxRmg,
     ) -> Result<(), marpii_rmg::RecordError> {
+        self.try_new_pipeline(ctx);
+
         self.pc.get_content_mut().resolution = [
             self.target_image.extent_2d().width,
             self.target_image.extent_2d().height,

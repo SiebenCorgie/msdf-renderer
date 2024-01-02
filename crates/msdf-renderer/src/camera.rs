@@ -88,13 +88,12 @@ impl Camera {
                 event: DeviceEvent::MouseMotion { delta },
                 ..
             } => {
-                self.rotation = self.rotation
-                    * Quat::from_euler(
-                        EulerRot::XYZ,
-                        delta.1 as f32 * Self::CAM_SPEEDUP,
-                        -delta.0 as f32 * Self::CAM_SPEEDUP,
-                        0.0,
-                    );
+                let right = self.rotation.mul_vec3(Vec3::new(1.0, 0.0, 0.0));
+                let rot_yaw = Quat::from_rotation_y(delta.0 as f32 * Self::CAM_SPEEDUP);
+                let rot_pitch = Quat::from_axis_angle(right, delta.1 as f32 * Self::CAM_SPEEDUP);
+
+                let to_add = rot_yaw * rot_pitch;
+                self.rotation = to_add * self.rotation;
             }
             _ => {}
         }

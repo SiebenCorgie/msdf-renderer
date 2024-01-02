@@ -22,7 +22,7 @@ fn reinhard_inverse(ldr: Vec4) -> Vec4 {
 //The Sdf function we are patching
 #[inline(never)]
 pub fn eval_sdf(pos: Vec3, offset: Vec3) -> f32 {
-    pos.length() - 1.0
+    pos.length() - offset.x
 }
 
 #[spirv(compute(threads(8, 8, 1)))]
@@ -49,7 +49,7 @@ pub fn renderer(
     const MAX_I: usize = 128;
 
     while t < ray.max_t && i < MAX_I {
-        let res = eval_sdf(ray.at(t), Vec3::ZERO);
+        let res = eval_sdf(ray.at(t), Vec3::from(push.offset));
         if res <= EPS {
             break;
         } else {
@@ -58,10 +58,8 @@ pub fn renderer(
         i += 1;
     }
 
-    let mut color = Vec3::ONE;
-    if t < (ray.max_t - 0.1) {
-        color = Vec3::ZERO;
-    }
+    let quo = t / ray.max_t;
+    let color = Vec3::new(1.0 * quo, 0.5 * quo, 0.3 * quo);
 
     if push.target_image.is_valid() {
         unsafe {

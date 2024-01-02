@@ -10,6 +10,7 @@ use camera::Camera;
 use marpii::{ash::vk::Extent2D, context::Ctx};
 use marpii_rmg::Rmg;
 use marpii_rmg_tasks::SwapchainPresent;
+use offset_entity::OffsetEntity;
 use shared::glam::{EulerRot, Quat, Vec3};
 use winit::{
     event::{DeviceEvent, ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
@@ -17,6 +18,7 @@ use winit::{
 };
 
 mod camera;
+mod offset_entity;
 mod patcher;
 mod st_pass;
 
@@ -41,17 +43,20 @@ fn main() {
     );
 
     let mut camera = Camera::default();
+    let mut offset_entity = OffsetEntity::new();
 
     ev.run(move |ev, _, cf| {
         *cf = ControlFlow::Poll;
 
         camera.on_event(&ev);
-
+        offset_entity.on_event(&ev);
         match ev {
             Event::RedrawRequested(_wid) => {
                 camera.update();
+                offset_entity.update();
 
                 st_pass.update_camera(&camera);
+                st_pass.offset_parameter(offset_entity.offset_parameter);
 
                 let resolution = window.inner_size();
                 st_pass.notify_resolution(

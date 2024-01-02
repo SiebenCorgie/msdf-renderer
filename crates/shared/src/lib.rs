@@ -22,6 +22,8 @@ pub struct RenderUniform {
     pub resolution: [u32; 2],
     pub target_image: ResourceHandle,
     pub pad1: [u32; 2],
+    pub offset: [f32; 3],
+    pub pad2: f32,
 }
 
 impl Default for RenderUniform {
@@ -33,6 +35,8 @@ impl Default for RenderUniform {
             resolution: [100, 100],
             target_image: ResourceHandle::INVALID,
             pad1: [0; 2],
+            offset: [0.0; 3],
+            pad2: 0.0,
         }
     }
 }
@@ -52,7 +56,7 @@ impl RenderUniform {
 
         Ray {
             direction,
-            max_t: 10.0,
+            max_t: 50.0,
             origin: self.camera_pos.into(),
         }
     }

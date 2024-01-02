@@ -1,5 +1,6 @@
 use hotwatch::{notify::Event, Hotwatch};
 use marpii::{resources::ShaderModule, OoS};
+use patch_function::StaticReplace;
 use std::{
     path::Path,
     sync::{
@@ -43,6 +44,8 @@ impl Patcher {
 
         watcher
             .watch("sdf.minisdf", move |ev: Event| {
+                println!("Shader changed!");
+
                 if !ev.kind.is_modify() {
                     return;
                 }
@@ -51,14 +54,74 @@ impl Patcher {
                 let modules = match msdfc::compile_file("sdf.minisdf") {
                     Ok(m) => m,
                     Err(e) => {
-                        println!("Failed to compile sdf.minisdf: {e}");
+                        log::error!("Failed to compile sdf.minisdf: {e}");
                         return;
                     }
                 };
 
                 //now, try to inject all fields, based on the name using the patcher for our base module
-                let patch = patcher.patch();
-                for (name, module) in modules {}
+                let mut patch = patcher.patch();
+                for (name, module) in modules {
+                    println!("Injecting module {name}");
+
+                    //Locally patch the module's memory model
+                    let module = {
+                        let mmpatcher = match spv_patcher::Module::new(
+                            bytemuck::cast_slice(&module).to_vec(),
+                        ) {
+                            Err(e) => {
+                                log::error!("Could not load patch module {name} into patcher: {e}");
+                                continue;
+                            }
+                            Ok(k) => k,
+                        };
+
+                        match mmpatcher.patch().patch(spv_patcher::patch::MemoryModel {
+                            from: (
+                                patch_function::rspirv::spirv::AddressingModel::Logical,
+                                patch_function::rspirv::spirv::MemoryModel::GLSL450,
+                            ),
+                            to: (
+                                patch_function::rspirv::spirv::AddressingModel::Logical,
+                                patch_function::rspirv::spirv::MemoryModel::Vulkan,
+                            ),
+                        }) {
+                            Err(e) => {
+                                log::error!("Failed to mutate memory model for {name}: {e}");
+                                continue;
+                            }
+                            Ok(k) => k.assemble(),
+                        }
+                    };
+
+                    let static_patch =
+                        match StaticReplace::new_from_bytes(&bytemuck::cast_slice(&module), 0) {
+                            Err(e) => {
+                                log::error!("Failed to build patch for {name}: {e}");
+                                return;
+                            }
+                            Ok(p) => p,
+                        };
+
+                    patch = match patch.patch(static_patch) {
+                        Ok(p) => p,
+                        Err(e) => {
+                            log::error!("Failed to patch {name}: {e}");
+                            return;
+                        }
+                    }
+                }
+
+                let new_module_code = patch.assemble();
+                match ShaderModule::new_from_bytes(&device, bytemuck::cast_slice(&new_module_code))
+                {
+                    Ok(sm) => {
+                        let _ = send.send(sm.into());
+                    }
+                    Err(e) => {
+                        log::error!("Could not build shader module for patched shader: {e}")
+                    }
+                }
             })
             .expect("Could not schedule sdf-file watcher!");
         Self {
