@@ -7,9 +7,14 @@ edition = "2021"
 
 [dependencies]
 marpii = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false, features = ["default_allocator", "logging"]}
+#marpii = {path = "../../../../marpii/crates/marpii", default-features = false, features = ["default_allocator", "logging"]}
+#marpii-rmg = {path = "../../../../marpii/crates/marpii-rmg", default-features = false}
 marpii-rmg = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false}
+#marpii-rmg-shared = {path = "../../../../marpii/crates/marpii-rmg-shared", default-features = false}
 marpii-rmg-shared = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false}
+#marpii-rmg-tasks = {path = "../../../../marpii/crates/marpii-rmg-tasks/marpii-rmg-tasks"}
 marpii-rmg-tasks = {git = "https://gitlab.com/tendsinmende/marpii.git"}
+
 ahash.workspace = true
 winit.workspace = true
 shared = {path = "../shared"}

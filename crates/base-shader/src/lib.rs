@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(asm_experimental_arch)]
 
+use shared::glam::{vec3, vec4};
 #[cfg(target_arch = "spirv")]
 use shared::spirv_std::num_traits::Float;
 use shared::spirv_std::{self, Sampler};
@@ -25,6 +26,20 @@ pub fn eval_sdf(pos: Vec3, offset: Vec3) -> f32 {
     pos.length() - offset.x
 }
 
+//Uses the thetrahedron technique described here: https://iquilezles.org/articles/normalsSDF/
+fn calc_normal(at: Vec3, offset: Vec3) -> Vec3 {
+    const H: f32 = 0.00001;
+    (vec3(1.0, -1.0, -1.0) * eval_sdf(at + (H * vec3(1.0, -1.0, -1.0)), offset)
+        + vec3(-1.0, -1.0, 1.0) * eval_sdf(at + (H * vec3(-1.0, -1.0, 1.0)), offset)
+        + vec3(-1.0, 1.0, -1.0) * eval_sdf(at + (H * vec3(-1.0, 1.0, -1.0)), offset)
+        + vec3(1.0, 1.0, 1.0) * eval_sdf(at + (H * vec3(1.0, 1.0, 1.0)), offset))
+    .normalize()
+}
+
+fn fresnel(u: f32, f0: Vec3) -> Vec3 {
+    f0 + (Vec3::ONE - f0) * (1.0 - u).powf(5.0)
+}
+
 #[spirv(compute(threads(8, 8, 1)))]
 pub fn renderer(
     #[spirv(push_constant)] push: &shared::RenderUniform,
@@ -43,10 +58,10 @@ pub fn renderer(
     let ndc = coord_uv * 2.0 - 1.0;
     let ray = push.ray_from_ndc(ndc);
 
-    let mut t = 0.1f32;
+    let mut t = 0.001f32;
     let mut i = 0;
-    const EPS: f32 = 0.01;
-    const MAX_I: usize = 128;
+    const EPS: f32 = 0.0001;
+    const MAX_I: usize = 512;
 
     while t < ray.max_t && i < MAX_I {
         let res = eval_sdf(ray.at(t), Vec3::from(push.offset));
@@ -58,14 +73,38 @@ pub fn renderer(
         i += 1;
     }
 
-    let quo = t / ray.max_t;
-    let color = Vec3::new(1.0 * quo, 0.5 * quo, 0.3 * quo);
+    //Early out as _sky_ if we ended the ray
+    if t >= ray.max_t - 1.0 || i >= MAX_I {
+        unsafe {
+            rgbaf32_images
+                .index(push.target_image.index() as usize)
+                .write(coord, vec4(0.85, 0.8, 0.9, 1.0));
+        }
+        return;
+    }
+
+    let nrm = calc_normal(ray.at(t), Vec3::from(push.offset));
+    //NOTE: Flipping cause we are in Vulkan space with -Y == UP.
+    const LIGHT_DIR: Vec3 = vec3(1.0, -1.0, 1.0);
+
+    let base_color = if (((t / ray.max_t) * 10.0) as i32) % 2 == 1 {
+        Vec3::new(1.0, 1.0, 1.0)
+    } else {
+        Vec3::new(1.0, 0.5, 0.5)
+    };
+
+    let n_dot_l = LIGHT_DIR.dot(nrm);
+    let ao = eval_sdf(ray.at(t) + nrm * 0.2, Vec3::from(push.offset));
+
+    let rim_light = Vec3::splat(1.0 - nrm.dot(-ray.direction)) * Vec3::new(0.8, 0.2, 1.0) * 0.2;
+    let direct_light = Vec3::new(0.2, 0.05, 1.0) * n_dot_l.max(0.1);
+    let color = base_color * (direct_light + rim_light) * (ao / 0.2);
 
     if push.target_image.is_valid() {
         unsafe {
             rgbaf32_images
                 .index(push.target_image.index() as usize)
-                .write(coord, color.extend(1.0));
+                .write(coord, reinhard_map(color.extend(1.0)));
         }
     }
 }

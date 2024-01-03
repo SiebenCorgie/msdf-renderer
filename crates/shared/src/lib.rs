@@ -45,6 +45,13 @@ impl RenderUniform {
     fn aspect_ratio(&self) -> f32 {
         self.resolution[0] as f32 / self.resolution[1] as f32
     }
+
+    pub fn camera_direction(&self) -> Vec3 {
+        //now rotate for camera
+        Quat::from_array(self.camera_rotation)
+            .mul_vec3(Vec3::Z)
+            .normalize()
+    }
     //ndc in -1.0 .. 1.0
     pub fn ray_from_ndc(&self, ndc: Vec2) -> Ray {
         let px = ndc.x * (self.fov / 2.0 * PI / 180.0).tan() * self.aspect_ratio();
@@ -55,7 +62,7 @@ impl RenderUniform {
         let direction = Quat::from_array(self.camera_rotation).mul_vec3(direction);
 
         Ray {
-            direction,
+            direction: direction.normalize(),
             max_t: 50.0,
             origin: self.camera_pos.into(),
         }

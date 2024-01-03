@@ -7,6 +7,7 @@ use std::{
         mpsc::{Receiver, TryRecvError},
         Arc,
     },
+    time::Instant,
 };
 
 static BASE_SHADER: &'static [u8] = include_bytes!("../../resources/base-shader.spv");
@@ -45,7 +46,7 @@ impl Patcher {
         watcher
             .watch("sdf.minisdf", move |ev: Event| {
                 println!("Shader changed!");
-
+                let start = Instant::now();
                 if !ev.kind.is_modify() {
                     return;
                 }
@@ -116,6 +117,10 @@ impl Patcher {
                 match ShaderModule::new_from_bytes(&device, bytemuck::cast_slice(&new_module_code))
                 {
                     Ok(sm) => {
+                        println!(
+                            "Successfuly patched in {}ms",
+                            start.elapsed().as_secs_f32() * 1000.0
+                        );
                         let _ = send.send(sm.into());
                     }
                     Err(e) => {

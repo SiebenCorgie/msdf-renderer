@@ -33,6 +33,8 @@ pub struct Camera {
     location: Vec3,
     rotation: Quat,
     last_update: Instant,
+
+    speedup: bool,
     move_states: [MoveState; 3],
 }
 
@@ -42,6 +44,7 @@ impl Default for Camera {
             location: Vec3::new(0.0, 0.0, -3.0),
             rotation: Quat::IDENTITY,
             last_update: Instant::now(),
+            speedup: false,
             move_states: [MoveState::default(); 3],
         }
     }
@@ -82,6 +85,9 @@ impl Camera {
                     self.move_states[1].pos = false
                 }
 
+                (Some(VirtualKeyCode::LShift), ElementState::Pressed) => self.speedup = true,
+                (Some(VirtualKeyCode::LShift), ElementState::Released) => self.speedup = false,
+
                 _ => {}
             },
             Event::DeviceEvent {
@@ -103,12 +109,15 @@ impl Camera {
         let delta = self.last_update.elapsed().as_secs_f32();
         self.last_update = Instant::now();
 
-        let velocity = Vec3::new(
+        let mut velocity = Vec3::new(
             self.move_states[0].into_velocity(),
             self.move_states[1].into_velocity(),
             self.move_states[2].into_velocity(),
         );
 
+        if self.speedup {
+            velocity *= 10.0;
+        }
         let velo_div = self.rotation.mul_vec3(velocity);
 
         self.location += velo_div * delta;
