@@ -1,17 +1,17 @@
 field myfield(offset: vec3){
     union(){
-        repeat(10.0, 5.0, 10.0){
-            inter(){
+        repeat(3.0, 10.0, 4.0){
+            sub(){
                 box(vec3(1.0, 2.0, 1.0))
             }{
-                repeat(0.5, 0.5, 0.5){
-                    sphere(0.2)
+                repeat(0.75, 0.75, 0.75){
+                    sphere(0.4)
                 }
             }
         }
     }{
         translate(offset){
-            torus(4.0, 1.0)
+            sphere(1.75)
         }
     }
 }
