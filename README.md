@@ -9,17 +9,16 @@
 
 ## Usage
 
-Start the renderer with `cargo run --bin msdf-renderer` The renderer uses file `sdf.minisdf` as the injected SDF code. If no such file exists,
-one is created.
+Start the renderer with `cargo run --bin msdf-renderer` The renderer uses `sdf.minisdf` as the injected SDF code. If no such file exists, one is created.
 
-The renderer watches the file, and recompiles it if necessary. So feel free to live-edit. Only valid code is send to the GPU.
+The renderer watches the file and recompiles it if necessary. So feel free to live-edit. Only valid code is sent to the GPU.
 
 ## Syntax
 
 OPs:
 ```
 Unary Operations:
-repeat(x: float, y: float, z: float) => repeats the SDF domain in the given box-bound
+repeat(x: float, y: float, z: float) => repeats the SDF domain in the given box-bound infinitely
 translate(translation: vec3) => translates the inner tree 
 smooth(radius: float) => smooths the inner SDF with the given radius
 
@@ -69,13 +68,15 @@ in _Controls_ without having to recompile the field.
 ## Controls
 
 Camera:
+
 - `W/A/S/D`: Translation
 - `Q/E`: Vertical translation
 - Mouse: Camera rotation
 
 Offset Parameter:
--`I/J/K/L`: Translation
--`O/U`: Vertical translation
+
+- `I/J/K/L`: Translation
+- `O/U`: Vertical translation
 
 ## Contributing
 

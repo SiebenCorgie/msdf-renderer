@@ -24,10 +24,10 @@ log.workspace = true
 
 
 msdfc = {git = "https://gitlab.com/tendsinmende/minisdf.git", branch = "main"}
-#spv-patcher = {git = "https://gitlab.com/tendsinmende/spv-patcher.git", branch = "main"}
-#patch-function = {git = "https://gitlab.com/tendsinmende/spv-patcher.git", branch = "main"}
-spv-patcher = {path = "../../../../../compiler/spv-patcher/crates/spv-patcher"}
-patch-function = {path = "../../../../../compiler/spv-patcher/crates/patch-function"}
+spv-patcher = {git = "https://gitlab.com/tendsinmende/spv-patcher.git", branch = "main"}
+patch-function = {git = "https://gitlab.com/tendsinmende/spv-patcher.git", branch = "main"}
+#spv-patcher = {path = "../../../../../compiler/spv-patcher/crates/spv-patcher"}
+#patch-function = {path = "../../../../../compiler/spv-patcher/crates/patch-function"}
 
 simple_logger.workspace = true
 bytemuck.workspace = true
