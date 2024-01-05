@@ -8,6 +8,10 @@ use shared::spirv_std::{self, Sampler};
 use shared::spirv_std::{spirv, Image, RuntimeArray};
 use spirv_std::glam::{IVec2, UVec2, UVec3, Vec2, Vec3, Vec3Swizzles, Vec4, Vec4Swizzles};
 
+//ULTRA VIOLET
+//const FOG_COLOR: Vec3 = vec3(95.0 / 255.0, 75.0 / 255.0, 139.0 / 255.0);
+const FOG_COLOR: Vec3 = vec3(1.0, 1.0, 1.0);
+
 fn luminance_rec_709(rgb: Vec3) -> f32 {
     rgb.dot(Vec3::new(0.2126, 0.7152, 0.0722))
 }
@@ -73,12 +77,15 @@ pub fn renderer(
         i += 1;
     }
 
+    let fog_base = (t / ray.max_t).clamp(0.0, 1.0);
+    let fog_color = FOG_COLOR;
+
     //Early out as _sky_ if we ended the ray
     if t >= ray.max_t - 1.0 || i >= MAX_I {
         unsafe {
             rgbaf32_images
                 .index(push.target_image.index() as usize)
-                .write(coord, vec4(0.85, 0.8, 0.9, 1.0));
+                .write(coord, fog_color.extend(1.0));
         }
         return;
     }
@@ -99,6 +106,7 @@ pub fn renderer(
     let rim_light = Vec3::splat(1.0 - nrm.dot(-ray.direction)) * Vec3::new(0.8, 0.2, 1.0) * 0.2;
     let direct_light = Vec3::new(0.2, 0.05, 1.0) * n_dot_l.max(0.1);
     let color = base_color * (direct_light + rim_light) * (ao / 0.2);
+    let color = color.lerp(FOG_COLOR, fog_base);
 
     if push.target_image.is_valid() {
         unsafe {

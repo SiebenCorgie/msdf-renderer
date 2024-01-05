@@ -10,6 +10,7 @@ field myfield(offset: vec3){
             }
         }
     }{
+
         translate(offset){
             sphere(1.75)
         }

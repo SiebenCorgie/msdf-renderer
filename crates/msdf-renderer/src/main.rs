@@ -8,7 +8,7 @@ use std::time::Instant;
 
 use camera::Camera;
 use marpii::{ash::vk::Extent2D, context::Ctx};
-use marpii_rmg::Rmg;
+use marpii_rmg::{Rmg, Task};
 use marpii_rmg_tasks::SwapchainPresent;
 use offset_entity::OffsetEntity;
 use shared::glam::{EulerRot, Quat, Vec3};
@@ -45,6 +45,8 @@ fn main() {
     let mut camera = Camera::default();
     let mut offset_entity = OffsetEntity::new();
 
+    let mut last_fps_draw = Instant::now();
+
     ev.run(move |ev, _, cf| {
         *cf = ControlFlow::Poll;
 
@@ -79,6 +81,22 @@ fn main() {
                     .unwrap()
                     .execute()
                     .unwrap();
+
+                if last_fps_draw.elapsed().as_millis() > 500 {
+                    last_fps_draw = Instant::now();
+                    let timing = rmg.get_recent_track_timings();
+                    for t in timing {
+                        if &t.name == st_pass.name() {
+                            let timing_ms = t.timing / 1_000_000.0;
+                            println!(
+                                "{}: {}ms  aka {}fps",
+                                t.name,
+                                timing_ms,
+                                1.0 / (timing_ms / 1000.0)
+                            );
+                        }
+                    }
+                }
             }
             Event::LoopDestroyed
             | Event::WindowEvent {

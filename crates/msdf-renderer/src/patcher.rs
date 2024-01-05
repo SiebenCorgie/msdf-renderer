@@ -7,7 +7,7 @@ use std::{
         mpsc::{Receiver, TryRecvError},
         Arc,
     },
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 static BASE_SHADER: &'static [u8] = include_bytes!("../../resources/base-shader.spv");
@@ -34,18 +34,20 @@ impl Patcher {
         send.send(OoS::new(base_shader))
             .expect("Failed to send initial base shader!");
 
-        let mut watcher = Hotwatch::new().expect("Could not create file watcher!");
+        let mut watcher = Hotwatch::new_with_custom_delay(Duration::from_millis(500))
+            .expect("Could not create file watcher!");
 
         if !Path::new("sdf.minisdf").exists() {
             panic!("File sdf.minisdf does not exist!");
         }
+
+        //touch the file
 
         let mut patcher =
             spv_patcher::Module::new(BASE_SHADER.to_vec()).expect("Could not load basecode");
 
         watcher
             .watch("sdf.minisdf", move |ev: Event| {
-                println!("Shader changed!");
                 let start = Instant::now();
                 if !ev.kind.is_modify() {
                     return;
@@ -129,6 +131,7 @@ impl Patcher {
                 }
             })
             .expect("Could not schedule sdf-file watcher!");
+
         Self {
             recv,
             hotwatch: watcher,

@@ -63,7 +63,7 @@ impl RenderUniform {
 
         Ray {
             direction: direction.normalize(),
-            max_t: 50.0,
+            max_t: 150.0,
             origin: self.camera_pos.into(),
         }
     }
