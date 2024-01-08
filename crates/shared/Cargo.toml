@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 #marpii-rmg-shared = {path = "../../../../marpii/crates/marpii-rmg-shared", default-features = false}
 marpii-rmg-shared = {git = "https://gitlab.com/tendsinmende/marpii.git", default-features = false}
-spirv-std = {git = "https://github.com/EmbarkStudios/rust-gpu.git", rev = "83f8c72"}
+spirv-std.workspace = true

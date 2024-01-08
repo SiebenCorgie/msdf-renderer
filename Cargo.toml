@@ -6,13 +6,14 @@ members = [
 "crates/msdf-renderer",
 ]
 
+resolver = "2"
 
 [workspace.dependencies]
-spirv-std = { git = "https://github.com/LykenSol/rust-gpu", rev = "d78df7e40f860efe85ef369fed10da2f2940bb70" }
-spirv-builder = { git = "https://github.com/LykenSol/rust-gpu", rev = "d78df7e40f860efe85ef369fed10da2f2940bb70" }
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "83f8c72"}
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "83f8c72"}
 bytemuck = "1"
 log = "0.4.15"
 thiserror = "1.0"
 simple_logger = "4"
 winit = "0.28"
-ahash = "=0.8.4"
+ahash = "0.8.7"
