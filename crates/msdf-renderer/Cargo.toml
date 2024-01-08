@@ -23,6 +23,7 @@ hotwatch = "0.5.0"
 log.workspace = true
 
 
+#msdfc = {path = "../../../../../compiler/minisdf/crates/msdfc"}
 msdfc = {git = "https://gitlab.com/tendsinmende/minisdf.git", branch = "main"}
 spv-patcher = {git = "https://gitlab.com/tendsinmende/spv-patcher.git", branch = "main"}
 patch-function = {git = "https://gitlab.com/tendsinmende/spv-patcher.git", branch = "main"}

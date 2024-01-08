@@ -1,0 +1,27 @@
+field myfield(offset: vec3){
+    repeat(50.0, 50.0, 50.0){
+        smooth_union(1.0){
+            box(vec3(10.0, 1.0, 10.0))
+        }{
+            union(){
+                union(){
+                    smooth(0.0){
+                        box(vec3(1.0, 25.0, 1.0))
+                        }
+                }{
+                    smooth(0.0){
+                        translate(vec3(0.0, 20.0, 0.0)){
+                            box(vec3(1.0, 1.0, 25.0))
+                        }
+                    }
+                }
+            }{
+                smooth(0.0){
+                    translate(vec3(0.0, -20.0, 0.0)){
+                        box(vec3(25.0, 1.0, 1.0))
+                    }
+                }
+            }
+        }
+    }
+}

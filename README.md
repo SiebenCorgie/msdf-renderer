@@ -19,13 +19,14 @@ OPs:
 ```
 Unary Operations:
 repeat(x: float, y: float, z: float) => repeats the SDF domain in the given box-bound infinitely
+repeat_in(domain_size: vec3, spacing: float) => repeats domains of cubic size `spacing` in the domain `domain_size`
 translate(translation: vec3) => translates the inner tree 
 smooth(radius: float) => smooths the inner SDF with the given radius
 
 Binary Operations
-Union => combines two SDFs
-Intersection => builds the intersection of both SDFs
-Subtract => Removes the second sdf from the first
+union / smooth_union  => combines two SDFs
+inter / smooth_inter => builds the intersection of both SDFs
+sub / smooth_sub => Removes the second sdf from the first
 
 ```
 

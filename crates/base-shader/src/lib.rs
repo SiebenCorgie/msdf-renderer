@@ -27,7 +27,7 @@ fn reinhard_inverse(ldr: Vec4) -> Vec4 {
 //The Sdf function we are patching
 #[inline(never)]
 pub fn eval_sdf(pos: Vec3, offset: Vec3) -> f32 {
-    pos.length() - offset.x
+    (pos - offset).length() - 1.0
 }
 
 //Uses the thetrahedron technique described here: https://iquilezles.org/articles/normalsSDF/
@@ -39,7 +39,6 @@ fn calc_normal(at: Vec3, offset: Vec3) -> Vec3 {
         + vec3(1.0, 1.0, 1.0) * eval_sdf(at + (H * vec3(1.0, 1.0, 1.0)), offset))
     .normalize()
 }
-
 fn fresnel(u: f32, f0: Vec3) -> Vec3 {
     f0 + (Vec3::ONE - f0) * (1.0 - u).powf(5.0)
 }
@@ -65,7 +64,7 @@ pub fn renderer(
     let mut t = 0.001f32;
     let mut i = 0;
     const EPS: f32 = 0.0001;
-    const MAX_I: usize = 512;
+    const MAX_I: usize = 1_000_000;
 
     while t < ray.max_t && i < MAX_I {
         let res = eval_sdf(ray.at(t), Vec3::from(push.offset));
@@ -80,13 +79,23 @@ pub fn renderer(
     let fog_base = (t / ray.max_t).clamp(0.0, 1.0);
     let fog_color = FOG_COLOR;
 
-    //Early out as _sky_ if we ended the ray
-    if t >= ray.max_t - 1.0 || i >= MAX_I {
+    if i >= MAX_I {
         unsafe {
             rgbaf32_images
                 .index(push.target_image.index() as usize)
-                .write(coord, fog_color.extend(1.0));
+                .write(coord, Vec3::X.extend(1.0));
         }
+        return;
+    }
+
+    //Early out as _sky_ if we ended the ray
+    if t > ray.max_t {
+        unsafe {
+            rgbaf32_images
+                .index(push.target_image.index() as usize)
+                .write(coord, reinhard_map(fog_color.extend(1.0)));
+        }
+
         return;
     }
 
