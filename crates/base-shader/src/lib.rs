@@ -10,7 +10,7 @@ use spirv_std::glam::{IVec2, UVec2, UVec3, Vec2, Vec3, Vec3Swizzles, Vec4, Vec4S
 
 //ULTRA VIOLET
 //const FOG_COLOR: Vec3 = vec3(95.0 / 255.0, 75.0 / 255.0, 139.0 / 255.0);
-const FOG_COLOR: Vec3 = vec3(1.0, 1.0, 1.0);
+const FOG_COLOR: Vec3 = vec3(56.0 / 255.0, 52.0 / 255.0, 49.0 / 255.0);
 
 fn luminance_rec_709(rgb: Vec3) -> f32 {
     rgb.dot(Vec3::new(0.2126, 0.7152, 0.0722))
@@ -103,17 +103,19 @@ pub fn renderer(
     //NOTE: Flipping cause we are in Vulkan space with -Y == UP.
     const LIGHT_DIR: Vec3 = vec3(1.0, -1.0, 1.0);
 
-    let base_color = if (((t / ray.max_t) * 10.0) as i32) % 2 == 1 {
+    /*let base_color = if (((t / ray.max_t) * 10.0) as i32) % 2 == 1 {
         Vec3::new(1.0, 1.0, 1.0)
     } else {
         Vec3::new(1.0, 0.5, 0.5)
-    };
+    };*/
+
+    let base_color = vec3(228.0 / 255.0, 232.0 / 255.0, 230.0 / 255.0);
 
     let n_dot_l = LIGHT_DIR.dot(nrm);
     let ao = eval_sdf(ray.at(t) + nrm * 0.2, Vec3::from(push.offset));
 
-    let rim_light = Vec3::splat(1.0 - nrm.dot(-ray.direction)) * Vec3::new(0.8, 0.2, 1.0) * 0.2;
-    let direct_light = Vec3::new(0.2, 0.05, 1.0) * n_dot_l.max(0.1);
+    let rim_light = Vec3::splat(1.0 - nrm.dot(-ray.direction)) * base_color * 0.2;
+    let direct_light = Vec3::new(1.0, 1.0, 1.0) * n_dot_l.max(0.1);
     let color = base_color * (direct_light + rim_light) * (ao / 0.2);
     let color = color.lerp(FOG_COLOR, fog_base);
 
