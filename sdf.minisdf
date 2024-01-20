@@ -1,17 +1,37 @@
 field myfield(offset: vec3){
-    smooth_union(0.5){
-        repeat(50.0, 5.0, 10.0){
-             box(vec3(1.0, 2.0, 1.0))
+    union(){
+        repeat(3.0, 10.0, 4.0){
+            sub(){
+                box(vec3(1.0, 2.0, 1.0))
+            }{
+                repeat(0.75, 0.75, 0.75){
+                    sphere(0.4)
+                }
+            }
         }
     }{
-        repeat(50.0, 10.0, 30.0){
-            union(){
-                translate(vec3(0.0, 0.0, 1.5)){
-                    sphere(1.0)
-                }
+        translate(offset){
+            inter(){
+                sphere(1.75)
             }{
-                translate(vec3(0.0, 0.0, -1.5)){
-                    sphere(1.0)
+                sub(){
+                    translate(vec3(0.0, 0.0, 0.0)){
+                        smooth(0.5){
+                            box(vec3(1.0, 1.0, 1.0))
+                        }
+                    }
+                }{
+                    smooth(0.5){
+                        union(){
+                            box(vec3(2.0, 0.1, 0.1))
+                        }{
+                            union(){
+                                box(vec3(0.1, 2.0, 0.1))
+                            }{
+                                box(vec3(0.1, 0.1, 2.0))
+                            }
+                        }
+                    }
                 }
             }
         }
